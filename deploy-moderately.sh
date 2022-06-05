@@ -4,7 +4,7 @@ validate_git_state() {
 
 build_and_push_docker() {
     pushd lambda/moderately
-    >&2 sh lambda/moderately/build-and-push-docker.sh    
+    >&2 sh build-and-push-docker.sh    
     popd
 }
 
@@ -14,9 +14,15 @@ apply_terraform() {
     popd
 }
 
+restart_lambda() {
+    pushd lambda/moderately
+    >&2 sh restart-lambda.sh
+    popd
+}
+
 
 validate_git_state &&
 build_and_push_docker &&
 sh set-image-tag.sh &&
 apply_terraform &&
-sh lambda/moderately/restart-lambda.sh
+restart_lambda
