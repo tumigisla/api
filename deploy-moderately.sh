@@ -25,4 +25,5 @@ validate_git_state &&
 build_and_push_docker &&
 sh set-image-tag.sh &&
 apply_terraform &&
-restart_lambda
+restart_lambda &&
+git commit -am "updated image tag"
