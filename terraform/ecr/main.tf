@@ -7,7 +7,7 @@ locals {
     "terraform"     = "true",
     "state"         = "ecr"
   })
-  ecr_repositories  = ["api"]
+  ecr_repositories = ["api"]
 }
 
 

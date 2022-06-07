@@ -37,3 +37,28 @@ resource "aws_iam_role_policy_attachment" "allow_rekognition_lambda" {
   role       = aws_iam_role.lambda_iam_role.name
   policy_arn = aws_iam_policy.allow_rekognition_lambda.arn
 }
+
+data "aws_iam_policy_document" "allow_logging_lambda" {
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "allow_logging_lambda" {
+  name        = "allow-logging-lambda"
+  description = "Allows lambda function to use logging"
+
+  policy = data.aws_iam_policy_document.allow_logging_lambda.json
+}
+
+resource "aws_iam_role_policy_attachment" "allow_logging_lambda" {
+  role       = aws_iam_role.lambda_iam_role.name
+  policy_arn = aws_iam_policy.allow_logging_lambda.arn
+}

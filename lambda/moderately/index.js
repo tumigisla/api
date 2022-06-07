@@ -38,47 +38,133 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 exports.__esModule = true;
 exports.lambdaHandler = void 0;
 var client_rekognition_1 = require("@aws-sdk/client-rekognition");
+var node_fetch_1 = require("node-fetch");
+var exponential_backoff_1 = require("exponential-backoff");
+var file_type_1 = require("file-type");
 var rekognition = new client_rekognition_1.RekognitionClient({
     region: "eu-west-1"
 });
-var lambdaHandler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var base64Image, imageBytes, input, command, result, error_1;
+var errorResponse = function (statusCode, errorMessage) {
+    return {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        statusCode: statusCode,
+        body: JSON.stringify({
+            error: errorMessage
+        })
+    };
+};
+var fetchImage = function (imageURL) { return __awaiter(void 0, void 0, void 0, function () {
+    var response, buffer, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, (0, exponential_backoff_1.backOff)(function () { return (0, node_fetch_1["default"])(imageURL, { method: "GET" }); })];
+            case 1:
+                response = _a.sent();
+                return [4 /*yield*/, response.arrayBuffer()];
+            case 2:
+                buffer = _a.sent();
+                return [2 /*return*/, buffer];
+            case 3:
+                error_1 = _a.sent();
+                console.error(error_1);
+                return [2 /*return*/, null];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
+var validateFileType = function (buffer) { return __awaiter(void 0, void 0, void 0, function () {
+    var ft, error_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                base64Image = event.body;
-                if (!base64Image) {
-                    return [2 /*return*/, {
-                            statusCode: 400,
-                            body: JSON.stringify({
-                                message: "Missing image"
-                            })
-                        }];
+                return [4 /*yield*/, (0, file_type_1["default"])(buffer)];
+            case 1:
+                ft = _a.sent();
+                return [2 /*return*/, (ft === null || ft === void 0 ? void 0 : ft.ext) === "jpg" || (ft === null || ft === void 0 ? void 0 : ft.ext) === "png"];
+            case 2:
+                error_2 = _a.sent();
+                console.error(error_2);
+                return [2 /*return*/, false];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); };
+var validateFileSize = function (buffer) {
+    try {
+        return buffer.byteLength < 5000000; // 5MB
+    }
+    catch (error) {
+        console.error(error);
+        return false;
+    }
+};
+var parseRekognitionResponse = function (rekognitionResponse) {
+    if (rekognitionResponse.ModerationLabels === undefined) {
+        return [];
+    }
+    return rekognitionResponse.ModerationLabels.filter(function (label) { return label.ParentName === "" || label.ParentName === undefined; }).map(function (label) {
+        return {
+            confidence: label.Confidence,
+            name: label.Name
+        };
+    });
+};
+var lambdaHandler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
+    var queryStringParameters, imageURL, imageBuffer, validFileType, image, input, command, result, parsedResponse, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                queryStringParameters = event.queryStringParameters || {};
+                imageURL = queryStringParameters.url;
+                if (imageURL === undefined) {
+                    return [2 /*return*/, errorResponse(400, "No image URL provided")];
                 }
-                imageBytes = Buffer.from(base64Image, "base64");
+                return [4 /*yield*/, fetchImage(imageURL)];
+            case 1:
+                imageBuffer = _a.sent();
+                if (imageBuffer === null) {
+                    return [2 /*return*/, errorResponse(404, "Image not found")];
+                }
+                return [4 /*yield*/, validateFileType(imageBuffer)];
+            case 2:
+                validFileType = _a.sent();
+                if (!validFileType) {
+                    return [2 /*return*/, errorResponse(400, "Invalid image format. Allowed formats are JPEG and PNG")];
+                }
+                if (!validateFileSize(imageBuffer)) {
+                    return [2 /*return*/, errorResponse(400, "Image is too large. Files up to 5MB are allowed")];
+                }
+                image = { Bytes: new Uint8Array(imageBuffer) };
                 input = {
-                    Image: { Bytes: imageBytes },
-                    MinConfidence: 0.0
+                    Image: image,
+                    MinConfidence: 50.0
                 };
                 command = new client_rekognition_1.DetectModerationLabelsCommand(input);
                 return [4 /*yield*/, rekognition.send(command)];
-            case 1:
+            case 3:
                 result = _a.sent();
+                parsedResponse = parseRekognitionResponse(result);
                 return [2 /*return*/, {
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
                         statusCode: 200,
-                        body: JSON.stringify(result)
+                        body: JSON.stringify(parsedResponse)
                     }];
-            case 2:
-                error_1 = _a.sent();
-                console.log(error_1);
-                return [2 /*return*/, {
-                        statusCode: 500,
-                        body: JSON.stringify({
-                            message: "Internal server error"
-                        })
-                    }];
-            case 3: return [2 /*return*/];
+            case 4:
+                error_3 = _a.sent();
+                console.error(error_3);
+                if (error_3 instanceof client_rekognition_1.InvalidImageFormatException) {
+                    return [2 /*return*/, errorResponse(400, "Image is invalid")];
+                }
+                return [2 /*return*/, errorResponse(500, "Internal server error")];
+            case 5: return [2 /*return*/];
         }
     });
 }); };
