@@ -1,6 +1,6 @@
 locals {
   aws_region = "eu-west-1"
-  image_tag="e0f7f0a7d7be9e11d65015f8ef043155f9c8f5cd"
+  image_tag  = "478b45d45d4f6f530179e21f1441fa4fcb3dd348"
   common_tags = tomap({
     "Owner"         = "DevOps",
     "Business Unit" = "IT",
@@ -39,10 +39,10 @@ data "terraform_remote_state" "ecr" {
 }
 
 resource "aws_lambda_function" "moderately" {
-    function_name = "moderately"
-    role=aws_iam_role.lambda_iam_role.arn
-    package_type = "Image"
-    image_uri ="${data.terraform_remote_state.ecr.outputs.api_repository_url}:moderately-${local.image_tag}"
-    memory_size=128
-    timeout = 10
+  function_name = "moderately"
+  role          = aws_iam_role.lambda_iam_role.arn
+  package_type  = "Image"
+  image_uri     = "${data.terraform_remote_state.ecr.outputs.api_repository_url}:moderately-${local.image_tag}"
+  memory_size   = 128
+  timeout       = 10
 }
