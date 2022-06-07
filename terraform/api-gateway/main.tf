@@ -79,7 +79,7 @@ resource "aws_apigatewayv2_integration" "moderately" {
 resource "aws_apigatewayv2_route" "moderately" {
   api_id = aws_apigatewayv2_api.api_gw.id
 
-  route_key = "GET /moderation_level"
+  route_key = "GET /moderation_labels"
   target    = "integrations/${aws_apigatewayv2_integration.moderately.id}"
 }
 
