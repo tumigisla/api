@@ -38,53 +38,13 @@ data "terraform_remote_state" "lambda" {
 }
 
 
-resource "aws_apigatewayv2_api" "api_gw" {
-  name          = "api"
-  protocol_type = "HTTP"
-}
-
-resource "aws_apigatewayv2_stage" "api_gw" {
-  api_id = aws_apigatewayv2_api.api_gw.id
-
-  name        = "api"
-  auto_deploy = true
-
-  access_log_settings {
-    destination_arn = aws_cloudwatch_log_group.api_gw.arn
-
-    format = jsonencode({
-      requestId               = "$context.requestId"
-      sourceIp                = "$context.identity.sourceIp"
-      requestTime             = "$context.requestTime"
-      protocol                = "$context.protocol"
-      httpMethod              = "$context.httpMethod"
-      resourcePath            = "$context.resourcePath"
-      routeKey                = "$context.routeKey"
-      status                  = "$context.status"
-      responseLength          = "$context.responseLength"
-      integrationErrorMessage = "$context.integrationErrorMessage"
-      }
-    )
-  }
-}
-
-resource "aws_apigatewayv2_integration" "moderately" {
-  api_id = aws_apigatewayv2_api.api_gw.id
-
-  integration_uri    = data.terraform_remote_state.lambda.outputs.moderately_invoke_arn
-  integration_type   = "AWS_PROXY"
-  integration_method = "POST"
-}
-
-resource "aws_apigatewayv2_route" "moderately" {
-  api_id = aws_apigatewayv2_api.api_gw.id
-
-  route_key = "GET /moderation_labels"
-  target    = "integrations/${aws_apigatewayv2_integration.moderately.id}"
+resource "aws_api_gateway_rest_api" "api_gw" {
+  name           = "api"
+  api_key_source = "HEADER"
 }
 
 resource "aws_cloudwatch_log_group" "api_gw" {
-  name = "/aws/api_gw/${aws_apigatewayv2_api.api_gw.name}"
+  name = "/aws/api_gw/${aws_api_gateway_rest_api.api_gw.name}"
 
   retention_in_days = 30
 }
