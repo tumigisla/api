@@ -51,7 +51,7 @@ var errorResponse = function (statusCode, errorMessage) {
         },
         statusCode: statusCode,
         body: JSON.stringify({
-            error: errorMessage
+            message: errorMessage
         })
     };
 };

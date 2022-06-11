@@ -1,6 +1,6 @@
 locals {
   aws_region = "eu-west-1"
-  image_tag  = "478b45d45d4f6f530179e21f1441fa4fcb3dd348"
+  image_tag  = "82ad3af4bbb262defc336c5cd00b0a8ac5ca471f"
   common_tags = tomap({
     "Owner"         = "DevOps",
     "Business Unit" = "IT",
