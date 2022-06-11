@@ -30,7 +30,7 @@ const errorResponse = (
     },
     statusCode: statusCode,
     body: JSON.stringify({
-      error: errorMessage,
+      message: errorMessage,
     }),
   };
 };
