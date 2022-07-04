@@ -2,8 +2,8 @@ resource "aws_api_gateway_stage" "moderately" {
   rest_api_id           = aws_api_gateway_rest_api.api_gw.id
   stage_name            = "moderately"
   deployment_id         = aws_api_gateway_deployment.moderately.id
-  cache_cluster_enabled = true
-  cache_cluster_size    = "0.5"
+  cache_cluster_enabled = false
+  /* cache_cluster_size    = "0.5" */
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gw.arn
@@ -56,12 +56,12 @@ resource "aws_api_gateway_method_settings" "image_settings" {
   stage_name  = aws_api_gateway_stage.moderately.stage_name
   method_path = "*/*"
   settings {
-    logging_level                              = "INFO"
-    data_trace_enabled                         = true
-    metrics_enabled                            = true
-    caching_enabled                            = true
-    cache_ttl_in_seconds                       = 300
-    unauthorized_cache_control_header_strategy = "FAIL_WITH_403"
+    logging_level      = "INFO"
+    data_trace_enabled = true
+    metrics_enabled    = true
+    caching_enabled    = false
+    /* cache_ttl_in_seconds                       = 300
+    unauthorized_cache_control_header_strategy = "FAIL_WITH_403" */
   }
   depends_on = [
     aws_api_gateway_method.image
